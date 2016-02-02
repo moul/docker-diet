@@ -1,0 +1,15 @@
+#!/bin/bash
+
+input_image="$1"
+
+tmpname=diet-$(openssl rand -base64 10 | sed 's@[=/]@@g')
+
+(
+    set -x
+    docker run --name="${tmpname}" --entrypoint=/dontexists "$input_image" 2>/dev/null || true
+    docker export "${tmpname}" | docker import - "diet-${input_image}"
+    docker rm "${tmpname}"
+)
+
+echo "Before: $(docker inspect --type=image --format='{{.VirtualSize}}' ${input_image})"
+echo "After:  $(docker inspect --type=image --format='{{.VirtualSize}}' diet-${input_image})"
